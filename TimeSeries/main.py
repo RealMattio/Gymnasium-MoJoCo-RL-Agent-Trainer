@@ -259,7 +259,7 @@ def main():
             train_data, val_data, test_data = train_preprocessor.divide_train_val_test_data()
             TRAIN_MEAN = train_preprocessor.train_mean
             TRAIN_STD = train_preprocessor.train_std
-        
+            
         # Caricamento e preprocessamento dei dati che verranno usati per il forecasting
         if args.forecastpath is not None:
             FORECAST_DATA_PATH = args.forecastpath
@@ -274,19 +274,32 @@ def main():
         # Possiamo procedere con il forecasting dei dati dei quattro modelli
         # Il primo ciclo servirà per i modelli a 1h (Autoregressivi)
         uffici_1h_forecast, uffici_1h_ground_truth = TSModel.autoregressive_forecast(preprocessed_forecast_data, uffici_1h_model, "Potenza Uffici [W]")
+        uffici_1h_mae = np.mean(np.abs(np.array(uffici_1h_forecast) - np.array(uffici_1h_ground_truth)))
+
+        uffici_1h_forecast = forecast_preprocessor.inverse_standardize_data(uffici_1h_forecast, TRAIN_MEAN, TRAIN_STD, "Potenza Uffici [W]")
+        uffici_1h_ground_truth = forecast_preprocessor.inverse_standardize_data(uffici_1h_ground_truth, TRAIN_MEAN, TRAIN_STD, "Potenza Uffici [W]")
         print(f"\nUffici 1h model forecast completed.")
         irr_1h_forecast, irr_1h_ground_truth = TSModel.autoregressive_forecast(preprocessed_forecast_data, irr_1h_model, "Irraggiamento [kWh/m2]")
-        print(f"\nIrraggiamento 1h model forecast completed.")
-        uffici_1h_mae = np.mean(np.abs(np.array(uffici_1h_forecast) - np.array(uffici_1h_ground_truth)))
         irr_1h_mae = np.mean(np.abs(np.array(irr_1h_forecast) - np.array(irr_1h_ground_truth)))
+
+        irr_1h_forecast = forecast_preprocessor.inverse_standardize_data(irr_1h_forecast, TRAIN_MEAN, TRAIN_STD, "Irraggiamento [kWh/m2]")
+        irr_1h_ground_truth = forecast_preprocessor.inverse_standardize_data(irr_1h_ground_truth, TRAIN_MEAN, TRAIN_STD, "Irraggiamento [kWh/m2]")
+        print(f"\nIrraggiamento 1h model forecast completed.")
 
         # Il secondo ciclo servirà per i modelli a 12h
         uffici_12h_forecast, uffici_12h_ground_truth = TSModel.forecast(preprocessed_forecast_data, uffici_12h_model, "Potenza Uffici [W]")
+        uffici_12h_mae = np.mean(np.abs(np.array(uffici_12h_forecast) - np.array(uffici_12h_ground_truth)))
+
+        uffici_12h_forecast = forecast_preprocessor.inverse_standardize_data(uffici_12h_forecast, TRAIN_MEAN, TRAIN_STD, "Potenza Uffici [W]")
+        uffici_12h_ground_truth = forecast_preprocessor.inverse_standardize_data(uffici_12h_ground_truth, TRAIN_MEAN, TRAIN_STD, "Potenza Uffici [W]")
         print(f"\nUffici 12h model forecast completed.")
         irr_12h_forecast, irr_12h_ground_truth = TSModel.forecast(preprocessed_forecast_data, irr_12h_model, "Irraggiamento [kWh/m2]")
-        print(f"\nIrraggiamento 12h model forecast completed.")
-        uffici_12h_mae = np.mean(np.abs(np.array(uffici_12h_forecast) - np.array(uffici_12h_ground_truth)))
         irr_12h_mae = np.mean(np.abs(np.array(irr_12h_forecast) - np.array(irr_12h_ground_truth)))
+
+        irr_12h_forecast = forecast_preprocessor.inverse_standardize_data(irr_12h_forecast, TRAIN_MEAN, TRAIN_STD, "Irraggiamento [kWh/m2]")
+        irr_12h_ground_truth = forecast_preprocessor.inverse_standardize_data(irr_12h_ground_truth, TRAIN_MEAN, TRAIN_STD, "Irraggiamento [kWh/m2]")
+
+        print(f"\nIrraggiamento 12h model forecast completed.")
         
         uffici_1h_plotter = Plotter(uffici_1h_ground_truth, uffici_1h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 1h forecast', args.forecastplot)
         uffici_1h_plotter.points_plot(num_subplots=3)

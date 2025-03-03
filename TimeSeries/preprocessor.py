@@ -86,3 +86,16 @@ class Preprocessor:
             self.val_data   = (self.val_data - self.train_mean) / self.train_std
             self.test_data  = (self.test_data - self.train_mean) / self.train_std
             return (self.train_mean, self.train_std)
+    
+    def inverse_standardize_data(self, data:pd.DataFrame, mean=None, std=None, nome_feature:str=None):
+        """
+        Destandardize the data.
+        :param data: (pd.DataFrame) The data to destandardize.
+        :param mean: (float) The mean of the data.
+        :param std: (float) The standard deviation of the data.
+        :return: (pd.DataFrame) The destandardized data.
+        """
+        if mean is None or std is None:
+            mean = self.train_mean
+            std = self.train_std
+        return data * std[nome_feature] + mean[nome_feature]
