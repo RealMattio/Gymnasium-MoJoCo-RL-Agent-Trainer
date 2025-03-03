@@ -11,7 +11,7 @@ class TSModel:
         "dropout_rate": [0.0, 0.2],
         "learning_rate": [0.001, 0.0005],
         "batch_size": [16, 32, 64],
-        "epochs": [1]  
+        "epochs": [100, 50]  
     }
     @staticmethod
     def build_model(input_shape, lstm_units=64, dense_units=12, dropout_rate=0.0, learning_rate=0.001):
@@ -26,7 +26,9 @@ class TSModel:
         '''
         model = tf.keras.Sequential([
             tf.keras.layers.Input(shape=input_shape),
-            tf.keras.layers.LSTM(lstm_units, dropout=dropout_rate),
+            #tf.keras.layers.LSTM(lstm_units*2, dropout=dropout_rate, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+            #tf.keras.layers.Dropout(0.3),
+            tf.keras.layers.LSTM(lstm_units, dropout=dropout_rate, kernel_regularizer=tf.keras.regularizers.l2(0.01)),
             tf.keras.layers.Dense(dense_units)
         ])
         
@@ -142,23 +144,23 @@ class TSModel:
         # 8. Addestramento del modello finale
         history = final_model.fit(
             train_ds,
-            epochs=best_params["epochs"],
+            epochs=best_params["epochs"]+300,
             validation_data=val_ds,
             verbose=1,
             callbacks=[early_stopping]
         )
         test_loss, test_mae = final_model.evaluate(test_ds, verbose=1)
         print("Test loss:", test_loss, "Test MAE:", test_mae)
-        if plot:
-            test_predictions = final_model.predict(test_ds)
-            test_labels = dm.extract_labels(test_ds)
-            # stampo le dimensioi di test predictions e test labels
-            # print(test_predictions.shape)
-            # print(test_labels.shape)
-            # time.sleep(1)
-            plotter = Plotter(test_labels, test_predictions, x_label, y_label, model_name)
-            plotter.test_plot(num_subplots)
-            plotter.history_plot(history)
+    
+        test_predictions = final_model.predict(test_ds)
+        test_labels = dm.extract_labels(test_ds)
+        # stampo le dimensioi di test predictions e test labels
+        # print(test_predictions.shape)
+        # print(test_labels.shape)
+        # time.sleep(1)
+        plotter = Plotter(test_labels, test_predictions, x_label, y_label, model_name, plot)
+        plotter.test_plot(num_subplots)
+        plotter.history_plot(history)
         return final_model, test_loss, test_mae
     
     @staticmethod

@@ -15,8 +15,9 @@ def main():
     parser.add_argument('--nohptuning', action='store_false', help='Hyperparameter tuning will not be performed. Training will conintue with best parameters found by the authors')
     parser.add_argument('--noforecast', action='store_false', help='Forecasting will not be performed')
     parser.add_argument('--trainpath', type=str, default='TimeSeries/Dataset-Project-Deep-Learning-SMRES-Unificato.xlsx', help='Path to the dataset used for training')
-    parser.add_argument('--save', action='store_true', help='If will be performed, save the new trained models into ./models folder')
-    parser.add_argument('--trainplot', action='store_true', help='It will not be possible to view the five prediction plots on the test set')
+    parser.add_argument('--save', action='store_true', help='If will be performed, save the new trained models into TimeSeries/models folder')
+    parser.add_argument('--trainplot', action='store_true', help='It will be possible to view some prediction plots on the test set, during the training. If not setted plot will automatically saved in TimeSeries/plots folder')
+    parser.add_argument('--forecastplot', action='store_true', help='It will be possible to view plots of forecasted values')
     parser.add_argument('--forecastpath', type=str, default='TimeSeries/Dataset-Project-Deep-Learning-SMRES-Scartati.xlsx', help='Path to the dataset used for forecasting')
     parser.add_argument('--pretrained', action='store_true', help='Use the pretrained models') 
     args = parser.parse_args()
@@ -113,7 +114,18 @@ def main():
         #salvataggio del modello
         if args.save:
             TSModel.save_model(uffici_12h_model, "uffici_12h")
-        
+            # salvo gli iperparametri nella cartella dei modelli
+            try:
+                with open('TimeSeries/models/best_params.json', 'r') as f:
+                    best_param_file = json.load(f)
+                best_param_file['uffici_12h'] = best_params_uff_12h
+                with open('TimeSeries/models/best_params.json', 'w') as f:
+                    json.dump(best_param_file, f)
+            except FileNotFoundError:
+                with open('TimeSeries/models/best_params.json', 'w') as f:
+                    json.dump({'uffici_12h': best_params_uff_12h}, f)
+
+
         # Addestramento del modello di previsione degli uffici (1h)
         uffici_1h_model, uffici_1h_test_loss, uffici_1h_test_mae = TSModel.train_model(
             input_shape=(X_train_uff_1h.shape[1], X_train_uff_1h.shape[2]),
@@ -137,6 +149,16 @@ def main():
         #salvataggio del modello
         if args.save:
             TSModel.save_model(uffici_1h_model, "uffici_1h")
+            # salvo gli iperparametri nella cartella dei modelli
+            try:
+                with open('TimeSeries/models/best_params.json', 'r') as f:
+                    best_param_file = json.load(f)
+                best_param_file['uffici_1h'] = best_params_uff_1h
+                with open('TimeSeries/models/best_params.json', 'w') as f:
+                    json.dump(best_param_file, f)
+            except FileNotFoundError:
+                with open('TimeSeries/models/best_params.json', 'w') as f:
+                    json.dump({'uffici_1h': best_params_uff_1h}, f)
         
         # Addestramento del modello di previsione dell'irraggiamento (12h)
         irr_12h_model, irr_12h_test_loss, irr_12h_test_mae = TSModel.train_model(
@@ -161,6 +183,16 @@ def main():
         #salvataggio del modello
         if args.save:
             TSModel.save_model(irr_12h_model, "irraggiamento_12h")
+            # salvo gli iperparametri nella cartella dei modelli
+            try:
+                with open('TimeSeries/models/best_params.json', 'r') as f:
+                    best_param_file = json.load(f)
+                best_param_file['irraggiamento_12h'] = best_params_irr_12h
+                with open('TimeSeries/models/best_params.json', 'w') as f:
+                    json.dump(best_param_file, f)
+            except FileNotFoundError:
+                with open('TimeSeries/models/best_params.json', 'w') as f:
+                    json.dump({'irraggiamento_12h': best_params_irr_12h}, f)
         
         # Addestramento del modello di previsione dell'irraggiamento (1h)
         irr_1h_model, irr_1h_test_loss, irr_1h_test_mae = TSModel.train_model(
@@ -185,6 +217,17 @@ def main():
         #salvataggio del modello
         if args.save:
             TSModel.save_model(irr_1h_model, "irraggiamento_1h")
+            # salvo gli iperparametri nella cartella dei modelli
+            try:
+                with open('TimeSeries/models/best_params.json', 'r') as f:
+                    best_param_file = json.load(f)
+                best_param_file['irraggiamento_1h'] = best_params_irr_1h
+                with open('TimeSeries/models/best_params.json', 'w') as f:
+                    json.dump(best_param_file, f)
+            except FileNotFoundError:
+                with open('TimeSeries/models/best_params.json', 'w') as f:
+                    json.dump({'irraggiamento_1h': best_params_irr_1h}, f)
+        print("Training completed.")
     
     if args.noforecast:
         # CARICAMENTO DEI MODELLI
@@ -245,16 +288,16 @@ def main():
         uffici_12h_mae = np.mean(np.abs(np.array(uffici_12h_forecast) - np.array(uffici_12h_ground_truth)))
         irr_12h_mae = np.mean(np.abs(np.array(irr_12h_forecast) - np.array(irr_12h_ground_truth)))
         
-        uffici_1h_plotter = Plotter(uffici_1h_ground_truth, uffici_1h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 1h forecast')
+        uffici_1h_plotter = Plotter(uffici_1h_ground_truth, uffici_1h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 1h forecast', args.forecastplot)
         uffici_1h_plotter.points_plot(num_subplots=3)
 
-        irr_1h_plotter = Plotter(irr_1h_ground_truth, irr_1h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 1h forecast')
+        irr_1h_plotter = Plotter(irr_1h_ground_truth, irr_1h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 1h forecast', args.forecastplot)
         irr_1h_plotter.points_plot(num_subplots=3)
 
-        uffici_12h_plotter = Plotter(uffici_12h_ground_truth, uffici_12h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 12h forecast')
+        uffici_12h_plotter = Plotter(uffici_12h_ground_truth, uffici_12h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 12h forecast', args.forecastplot)
         uffici_12h_plotter.points_plot(num_subplots=3)
 
-        irr_12h_plotter = Plotter(irr_12h_ground_truth, irr_12h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 12h forecast')
+        irr_12h_plotter = Plotter(irr_12h_ground_truth, irr_12h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 12h forecast', args.forecastplot)
         irr_12h_plotter.points_plot(num_subplots=3)
 
         # salvo i dati predetti nella cartella forecasted_data
@@ -265,8 +308,10 @@ def main():
         pd.DataFrame(uffici_12h_forecast).to_excel('TimeSeries/forecasted_data/uffici_12h_forecast.xlsx', index=False)
         pd.DataFrame(irr_12h_forecast).to_excel('TimeSeries/forecasted_data/irraggiamento_12h_forecast.xlsx', index=False)
         print(f"\nForecasted data saved.")
+
+        print("\nForecasting completed.")
     
-    print("Training and forecasting completed.")
+    print("Process completed succesfully.")
         
 if __name__ == "__main__":
     main()

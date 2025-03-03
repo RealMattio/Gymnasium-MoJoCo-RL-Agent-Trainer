@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import tensorflow as tf
-import os
+import os, math
 import random as rd
 import numpy as np
 class Plotter:
-    def __init__(self, real_values, forecasted_values, xlabel:str, ylabel:str, model_name:str, real_label='Real Values', forecasted_label='Forecasted Values'):
+    def __init__(self, real_values, forecasted_values, xlabel:str, ylabel:str, model_name:str, show_plot:bool,real_label='Real Values', forecasted_label='Forecasted Values'):
         '''
         create a Plotter object. it will be used to plot the real and forecasted values.
         :param real_values: The real values.
@@ -12,6 +12,7 @@ class Plotter:
         :param xlabel: (str) The label of the x-axis.
         :param ylabel: (str) The label of the y-axis.
         :param model_name: (str) The name of the model.
+        :param show_plot: (bool) If True the plot will be shown and saved. If False the plot will be saved only. 
         :param real_label: (str) The label of the real values.
         :param forecasted_label: (str) The label of the forecasted values.
         '''
@@ -22,10 +23,12 @@ class Plotter:
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.model_name = model_name
+        self.show_plot = show_plot
     
     def test_plot(self, num_subplots=3):
         '''
-        Plot num_subplots days of real and forecasted values.
+        Plot num_subplots days of real and forecasted values. It will use the real values and forecasted values passed to the constructor.
+        It will absume that are used 24 previous time stamp to forecast. Number of forecasted values is calculated from the shape of the forecasted values.
         :param num_subplots: (int) The number of subplots to create.
         '''
         # Ensure inputs are NumPy arrays
@@ -36,8 +39,7 @@ class Plotter:
         if len(self.forecasted_values) != len(self.real_values):
             raise ValueError("Predictions and ground truth must have the same length.")
         
-        prevision_number = self.forecasted_values.shape[0]
-        num_forecasted_values = self.forecasted_values.shape[1]
+        prevision_number, num_forecasted_values = self.forecasted_values.shape
         print(num_forecasted_values, prevision_number)
         timestamps = np.arange(24 + num_forecasted_values)
         # Create a figure with num_subplots subplots
@@ -49,16 +51,23 @@ class Plotter:
         
         # Plot each interval
         for i in range(num_subplots):
-            random_index = rd.randint(0,prevision_number-(24+num_forecasted_values))
+            random_index = rd.randint(24,prevision_number-num_forecasted_values)
             
             if num_forecasted_values > 1:
-                #plot dei dati usati per la previsione
-                axes[i].plot(timestamps[:24], self.real_values[random_index:random_index+24,1], label = 'Data', color = 'blue', marker='.', linestyle='-')
+                # plot dei dati usati per la previsione
+                # calcolo quante previsioni sono necessarie per coprire 24 ore
+                n = math.ceil(24/num_forecasted_values)
+                # ottengo i valori del giorno prima che sono stati passati al modello per fare la previsione
+                day_before = np.concatenate(self.real_values[random_index-n:random_index,:], axis=0)
+                if len(day_before) > 24:
+                    # elimino i dati in eccesso a partire dall'inizio
+                    day_before = day_before[len(day_before)-24:]
+                #plot dei dati reali del giorno prima
+                axes[i].plot(timestamps[:24], day_before, label = 'Data', color = 'blue', marker='.', linestyle='-')
                 #plot delle previsioni
-                print(timestamps[24:].shape, self.forecasted_values[random_index+24:random_index+24+num_forecasted_values,1].shape)
-                axes[i].scatter(timestamps[24:], self.forecasted_values[random_index+24:random_index+24+num_forecasted_values,1], label = 'Predictions', color='red', marker='x')
+                axes[i].scatter(timestamps[24:], self.forecasted_values[random_index,:], label = 'Predictions', color='red', marker='x')
                 #plot della ground truth
-                axes[i].scatter(timestamps[24:], self.real_values[random_index+24:random_index+24+num_forecasted_values,1], label = 'Real Values', color='green', marker='o')
+                axes[i].scatter(timestamps[24:], self.real_values[random_index,:], label = 'Real Values', color='green', marker='o')
             else:
                 axes[i].plot(timestamps[:24], self.real_values[random_index:random_index+24], label = 'Data', color = 'blue', marker='.', linestyle='-')
                 axes[i].scatter(timestamps[24:], self.forecasted_values[random_index+24:random_index+24+num_forecasted_values], label = 'Predictions', color='red', marker='x')
@@ -75,11 +84,10 @@ class Plotter:
         if not os.path.exists('./TimeSeries/plots'):
             os.makedirs('./TimeSeries/plots')
         plt.savefig(f'./TimeSeries/plots/test_predictions_{self.model_name}.png', dpi=300, bbox_inches='tight')
-        plt.show()
-        # if not os.path.exists('./TimeSeries/plots'):
-        #     os.makedirs('./TimeSeries/plots')
-        # plt.savefig(f'./TimeSeries/plots/test_predictions_{self.model_name}.png')
-
+        if self.show_plot:
+            plt.show()
+        else:
+            plt.close()
 
     def points_plot(self, num_subplots=1, num_points=None):
         '''
@@ -114,7 +122,10 @@ class Plotter:
         if not os.path.exists('./TimeSeries/plots'):
             os.makedirs('./TimeSeries/plots')
         plt.savefig(f'./TimeSeries/plots/forcasted_values_{self.model_name}.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        if self.show_plot:
+            plt.show()
+        else:
+            plt.close()
         
     def history_plot(self, history:tf.keras.callbacks.History):
         '''
@@ -133,5 +144,8 @@ class Plotter:
         if not os.path.exists('./TimeSeries/plots'):
             os.makedirs('./TimeSeries/plots')
         plt.savefig(f'./TimeSeries/plots/training_history_{self.model_name}.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        if self.show_plot:
+            plt.show()
+        else:
+            plt.close()
         
