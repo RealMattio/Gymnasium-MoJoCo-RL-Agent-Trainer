@@ -26,7 +26,7 @@ def main():
     TRAIN_MEAN = None
     TRAIN_STD = None
 
-    # ----------------- Training Section -----------------
+  
     if args.notrain:
         TRAIN_DATA_PATH = args.trainpath if args.trainpath is not None else 'TimeSeries/Dataset-Project-Deep-Learning-SMRES-Unificato.xlsx'
         train_preprocessor = Preprocessor(data_path=TRAIN_DATA_PATH)
@@ -203,7 +203,6 @@ def main():
                     json.dump({'irraggiamento_1h': best_params_irr_1h}, f)
         print("Training completed.")
     
-    # ----------------- Forecasting Section -----------------
     if args.noforecast:
         if args.pretrained:
             try:
@@ -253,7 +252,6 @@ def main():
         data_series_irr = preprocessed_forecast_data["Irraggiamento [kWh/m2]"].values
         irr_ground_truth = data_series_irr[-forecast_steps:]
 
-        # --- Calcolo metriche sui valori standardizzati ---
         def compute_nmae_by_hour(predictions, ground_truth):
             nmae_per_hour = []
             for hour in range(24):
@@ -314,14 +312,12 @@ def main():
         else:
             plt.close()
 
-        # --- Ora destandardizziamo i forecast PRIMA di salvarli ---
-        # (usiamo i parametri di standardizzazione per la colonna Potenza Uffici e Irraggiamento)
+        
         uff_mean = TRAIN_MEAN["Potenza Uffici [W]"]
         uff_std  = TRAIN_STD["Potenza Uffici [W]"]
         irr_mean = TRAIN_MEAN["Irraggiamento [kWh/m2]"]
         irr_std  = TRAIN_STD["Irraggiamento [kWh/m2]"]
 
-        # Creiamo i DataFrame con i forecast e destandardizziamo la colonna 'Forecast'
         timestamps = pd.date_range(start="01/07/2022 00:00:00", periods=forecast_steps, freq="H")
 
         df_uffici_1h = pd.DataFrame({"Timestamp": timestamps, "Forecast": uffici_1h_forecast})
@@ -329,13 +325,11 @@ def main():
         df_irraggiamento_1h = pd.DataFrame({"Timestamp": timestamps, "Forecast": irr_1h_forecast})
         df_irraggiamento_12h = pd.DataFrame({"Timestamp": timestamps, "Forecast": irr_12h_forecast})
 
-        # Destandardizzo la colonna Forecast (solo per i valori del target corrispondente)
         df_uffici_1h["Forecast"] = df_uffici_1h["Forecast"] * uff_std + uff_mean
         df_uffici_12h["Forecast"] = df_uffici_12h["Forecast"] * uff_std + uff_mean
         df_irraggiamento_1h["Forecast"] = df_irraggiamento_1h["Forecast"] * irr_std + irr_mean
         df_irraggiamento_12h["Forecast"] = df_irraggiamento_12h["Forecast"] * irr_std + irr_mean
 
-        # Salviamo i file Excel in scala reale
         if not os.path.exists('TimeSeries/forecasted_data'):
             os.makedirs('TimeSeries/forecasted_data')
         df_uffici_1h.to_excel("TimeSeries/forecasted_data/uffici_1h_forecast.xlsx", index=False)
