@@ -106,3 +106,45 @@ class Plotter:
             plt.show()
         else:
             plt.close()
+
+    @staticmethod
+    def nmae_comparison_plot(uffici_1h_nmae, uffici_12h_nmae, showplot):
+        """
+        Plot del confronto tra NMAE per i modelli Uffici 1h e Uffici 12h.
+        :param uffici_1h_nmae: (list) Lista di NMAE per il modello Uffici 1h.
+        :param uffici_12h_nmae: (list) Lista di NMAE per il modello Uffici 12h.
+        """
+        plt.figure(figsize=(10,6))
+        plt.plot(np.arange(24), uffici_1h_nmae,  marker='o', label='Uffici 1h')
+        plt.plot(np.arange(24), uffici_12h_nmae, marker='o', label='Uffici 12h', color='orange')
+        plt.xlabel("Ora del giorno (0-23)")
+        plt.ylabel("NMAE")
+        plt.title("Confronto NMAE - Uffici 1h vs 12h")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("TimeSeries/plots/confronto_nmae_uffici.png", dpi=300, bbox_inches='tight')
+        if showplot:
+            plt.show()
+        else:
+            plt.close()
+
+    @staticmethod
+    def rmse_comparison_plot(irr_1h_rmse, irr_12h_rmse, showplot):
+        """
+        Plot del confronto tra RMSE per i modelli Uffici 1h e Uffici 12h.
+        :param uffici_1h_rmse: (list) Lista di RMSE per il modello Uffici 1h.
+        :param uffici_12h_rmse: (list) Lista di RMSE per il modello Uffici 12h.
+        """
+        plt.figure(figsize=(10,6))
+        plt.plot(np.arange(24), irr_1h_rmse,  marker='o', label='Irraggiamento 1h')
+        plt.plot(np.arange(24), irr_12h_rmse, marker='o', label='Irraggiamento 12h', color='orange')
+        plt.xlabel("Ora del giorno (0-23)")
+        plt.ylabel("RMSE")
+        plt.title("Confronto RMSE - Irraggiamento 1h vs 12h")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("TimeSeries/plots/confronto_rmse_irraggiamento.png", dpi=300, bbox_inches='tight')
+        if showplot:
+            plt.show()
+        else:
+            plt.close()

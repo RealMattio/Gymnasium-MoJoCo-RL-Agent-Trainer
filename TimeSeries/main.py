@@ -245,6 +245,19 @@ def main():
         irr_1h_forecast    = TSModel.autoregressive_forecast_full(preprocessed_forecast_data, irr_1h_model,    "Irraggiamento [kWh/m2]", input_width, forecast_steps)
         uffici_12h_forecast = TSModel.autoregressive_forecast_full(preprocessed_forecast_data, uffici_12h_model, "Potenza Uffici [W]", input_width, forecast_steps)
         irr_12h_forecast    = TSModel.autoregressive_forecast_full(preprocessed_forecast_data, irr_12h_model,    "Irraggiamento [kWh/m2]", input_width, forecast_steps)
+
+        # Plot dei dati predetti
+        uffici_1h_plotter = Plotter(preprocessed_forecast_data["Potenza Uffici [W]"], uffici_1h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 1h forecast', args.forecastplot)
+        uffici_1h_plotter.points_plot(num_subplots=3)
+
+        irr_1h_plotter = Plotter(preprocessed_forecast_data["Irraggiamento [kWh/m2]"], irr_1h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 1h forecast', args.forecastplot)
+        irr_1h_plotter.points_plot(num_subplots=3)
+
+        uffici_12h_plotter = Plotter(preprocessed_forecast_data["Potenza Uffici [W]"], uffici_12h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 12h forecast', args.forecastplot)
+        uffici_12h_plotter.points_plot(num_subplots=3)
+
+        irr_12h_plotter = Plotter(preprocessed_forecast_data["Irraggiamento [kWh/m2]"], irr_12h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 12h forecast', args.forecastplot)
+        irr_12h_plotter.points_plot(num_subplots=3)
         
         # Ground truth (standardizzata) per il calcolo metriche
         data_series_uff = preprocessed_forecast_data["Potenza Uffici [W]"].values
@@ -252,79 +265,31 @@ def main():
         data_series_irr = preprocessed_forecast_data["Irraggiamento [kWh/m2]"].values
         irr_ground_truth = data_series_irr[-forecast_steps:]
 
-        def compute_nmae_by_hour(predictions, ground_truth):
-            nmae_per_hour = []
-            for hour in range(24):
-                idx = np.where(np.arange(len(predictions)) % 24 == hour)[0]
-                if len(idx) > 0:
-                    mae = np.mean(np.abs(predictions[idx] - ground_truth[idx]))
-                    norm = np.mean(np.abs(ground_truth[idx]))
-                    nmae = mae / norm if norm != 0 else mae
-                    nmae_per_hour.append(nmae)
-                else:
-                    nmae_per_hour.append(np.nan)
-            return np.array(nmae_per_hour)
-
-        def compute_rmse_by_hour(predictions, ground_truth):
-            rmse_per_hour = []
-            for hour in range(24):
-                idx = np.where(np.arange(len(predictions)) % 24 == hour)[0]
-                if len(idx) > 0:
-                    rmse = np.sqrt(np.mean((predictions[idx] - ground_truth[idx])**2))
-                    rmse_per_hour.append(rmse)
-                else:
-                    rmse_per_hour.append(np.nan)
-            return np.array(rmse_per_hour)
-
         # NMAE Uffici
-        uffici_1h_nmae  = compute_nmae_by_hour(uffici_1h_forecast,  uffici_ground_truth)
-        uffici_12h_nmae = compute_nmae_by_hour(uffici_12h_forecast, uffici_ground_truth)
+        uffici_1h_nmae  = TSModel.compute_nmae_by_hour(uffici_1h_forecast,  uffici_ground_truth)
+        uffici_12h_nmae = TSModel.compute_nmae_by_hour(uffici_12h_forecast, uffici_ground_truth)
         # RMSE Irraggiamento
-        irr_1h_rmse  = compute_rmse_by_hour(irr_1h_forecast,  irr_ground_truth)
-        irr_12h_rmse = compute_rmse_by_hour(irr_12h_forecast, irr_ground_truth)
+        irr_1h_rmse  = TSModel.compute_rmse_by_hour(irr_1h_forecast,  irr_ground_truth)
+        irr_12h_rmse = TSModel.compute_rmse_by_hour(irr_12h_forecast, irr_ground_truth)
 
         # --- Plot di confronto ---
-        plt.figure(figsize=(10,6))
-        plt.plot(np.arange(24), uffici_1h_nmae,  marker='o', label='Uffici 1h')
-        plt.plot(np.arange(24), uffici_12h_nmae, marker='o', label='Uffici 12h', color='orange')
-        plt.xlabel("Ora del giorno (0-23)")
-        plt.ylabel("NMAE")
-        plt.title("Confronto NMAE - Uffici 1h vs 12h")
-        plt.legend()
-        plt.grid(True)
-        plt.savefig("TimeSeries/plots/confronto_nmae_uffici.png", dpi=300, bbox_inches='tight')
-        if args.forecastplot:
-            plt.show()
-        else:
-            plt.close()
+        Plotter.nmae_comparison_plot(uffici_1h_nmae, uffici_12h_nmae, args.forecastplot)
+        Plotter.rmse_comparison_plot(irr_1h_rmse, irr_12h_rmse, args.forecastplot)
 
-        plt.figure(figsize=(10,6))
-        plt.plot(np.arange(24), irr_1h_rmse,  marker='o', label='Irraggiamento 1h')
-        plt.plot(np.arange(24), irr_12h_rmse, marker='o', label='Irraggiamento 12h', color='orange')
-        plt.xlabel("Ora del giorno (0-23)")
-        plt.ylabel("RMSE")
-        plt.title("Confronto RMSE - Irraggiamento 1h vs 12h")
-        plt.legend()
-        plt.grid(True)
-        plt.savefig("TimeSeries/plots/confronto_rmse_irraggiamento.png", dpi=300, bbox_inches='tight')
-        if args.forecastplot:
-            plt.show()
-        else:
-            plt.close()
-
-        
+        # --- Salvataggio dati previsione ---        
         uff_mean = TRAIN_MEAN["Potenza Uffici [W]"]
         uff_std  = TRAIN_STD["Potenza Uffici [W]"]
         irr_mean = TRAIN_MEAN["Irraggiamento [kWh/m2]"]
         irr_std  = TRAIN_STD["Irraggiamento [kWh/m2]"]
 
-        timestamps = pd.date_range(start="01/07/2022 00:00:00", periods=forecast_steps, freq="H")
+        timestamps = pd.date_range(start="01/07/2022 00:00:00", periods=forecast_steps, freq="h")
 
         df_uffici_1h = pd.DataFrame({"Timestamp": timestamps, "Forecast": uffici_1h_forecast})
         df_uffici_12h = pd.DataFrame({"Timestamp": timestamps, "Forecast": uffici_12h_forecast})
         df_irraggiamento_1h = pd.DataFrame({"Timestamp": timestamps, "Forecast": irr_1h_forecast})
         df_irraggiamento_12h = pd.DataFrame({"Timestamp": timestamps, "Forecast": irr_12h_forecast})
 
+        # Inverto la standardizzazione
         df_uffici_1h["Forecast"] = df_uffici_1h["Forecast"] * uff_std + uff_mean
         df_uffici_12h["Forecast"] = df_uffici_12h["Forecast"] * uff_std + uff_mean
         df_irraggiamento_1h["Forecast"] = df_irraggiamento_1h["Forecast"] * irr_std + irr_mean

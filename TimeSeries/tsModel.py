@@ -178,3 +178,30 @@ class TSModel:
             new_row[target_index] = predicted_value
             current_window = np.vstack([current_window[1:], new_row])
         return np.array(predictions)
+    
+    @staticmethod
+    def compute_nmae_by_hour(predictions, ground_truth):
+        nmae_per_hour = []
+        for hour in range(24):
+            idx = np.where(np.arange(len(predictions)) % 24 == hour)[0]
+            if len(idx) > 0:
+                mae = np.mean(np.abs(predictions[idx] - ground_truth[idx]))
+                norm = np.mean(np.abs(ground_truth[idx]))
+                nmae = mae / norm if norm != 0 else mae
+                nmae_per_hour.append(nmae)
+            else:
+                nmae_per_hour.append(np.nan)
+        return np.array(nmae_per_hour)
+    
+    @staticmethod
+    def compute_rmse_by_hour(predictions, ground_truth):
+        rmse_per_hour = []
+        for hour in range(24):
+            idx = np.where(np.arange(len(predictions)) % 24 == hour)[0]
+            if len(idx) > 0:
+                rmse = np.sqrt(np.mean((predictions[idx] - ground_truth[idx])**2))
+                rmse_per_hour.append(rmse)
+            else:
+                rmse_per_hour.append(np.nan)
+        return np.array(rmse_per_hour)
+
