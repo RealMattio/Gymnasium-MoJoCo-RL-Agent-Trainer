@@ -64,10 +64,11 @@ class Plotter:
         if num_points is None:
             num_points = len(self.real_values) // num_subplots
 
+        '''
         if len(self.real_values) != len(self.forecasted_values):
             print(f"\nLunghezza valori reali {len(self.real_values)}", f"\nLunghezza valori predetti {len(self.forecasted_values)}")
             raise ValueError("Real and Forecasted values have different lengths.")
-        
+        '''
         fig, axes = plt.subplots(num_subplots, 1, figsize=(10, 5 * num_subplots))
         if num_subplots == 1:
             axes = [axes]
