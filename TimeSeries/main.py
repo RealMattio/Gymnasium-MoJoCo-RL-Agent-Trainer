@@ -3,12 +3,11 @@ from datasetModeler import DatasetModeller as dm
 from tsModel import TSModel
 from tensorflow.keras.callbacks import EarlyStopping
 from plotter import Plotter
-import numpy as np
 import pandas as pd
 import argparse
-import os
+import numpy as np
 import json
-import matplotlib.pyplot as plt
+import os
 
 def main():
     parser = argparse.ArgumentParser(description='Train and forecast parameters')
@@ -26,7 +25,6 @@ def main():
     TRAIN_MEAN = None
     TRAIN_STD = None
 
-  
     if args.notrain:
         TRAIN_DATA_PATH = args.trainpath if args.trainpath is not None else 'TimeSeries/Dataset-Project-Deep-Learning-SMRES-Unificato.xlsx'
         train_preprocessor = Preprocessor(data_path=TRAIN_DATA_PATH)

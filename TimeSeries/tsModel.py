@@ -4,21 +4,37 @@ import numpy as np
 from datasetModeler import DatasetModeller as dm
 import os
 from plotter import Plotter
-import time
+
 
 class TSModel:
     PARAM_GRID = {
-        "lstm_units": [32, 64, 128],
+        "lstm_units_1": [32, 64, 128],
+        "lstm_units_2": [32, 64, 128],
         "dropout_rate": [0.0, 0.2],
         "learning_rate": [0.001, 0.0005],
         "batch_size": [16, 32, 64],
-        "epochs": [100, 50]  
+        "epochs": [100, 50]
     }
+
     @staticmethod
-    def build_model(input_shape, lstm_units=64, dense_units=12, dropout_rate=0.0, learning_rate=0.001):
+    def build_model(input_shape, 
+                    lstm_units_1=64, lstm_units_2=64, 
+                    dense_units=12, 
+                    dropout_rate=0.0, 
+                    learning_rate=0.001):
         model = tf.keras.Sequential([
             tf.keras.layers.Input(shape=input_shape),
-            tf.keras.layers.LSTM(lstm_units, dropout=dropout_rate, kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+            tf.keras.layers.LSTM(
+                lstm_units_1, 
+                dropout=dropout_rate, 
+                return_sequences=True,
+                kernel_regularizer=tf.keras.regularizers.l2(0.01)
+            ),
+            tf.keras.layers.LSTM(
+                lstm_units_2, 
+                dropout=dropout_rate, 
+                kernel_regularizer=tf.keras.regularizers.l2(0.01)
+            ),
             tf.keras.layers.Dense(dense_units)
         ])
         
@@ -30,11 +46,11 @@ class TSModel:
         return model
 
     @staticmethod
-    def load_model(model_path:str):
+    def load_model(model_path: str):
         return tf.keras.models.load_model(model_path)
     
     @staticmethod
-    def GridSearch(X_trainval, y_trainval, dense_units:int=12, early_stopping:tf.keras.callbacks.EarlyStopping=None, param_grid:dict=PARAM_GRID):
+    def GridSearch(X_trainval, y_trainval, dense_units: int = 12, early_stopping: tf.keras.callbacks.EarlyStopping = None, param_grid: dict = PARAM_GRID):
         keys = param_grid.keys()
         values = param_grid.values()
         param_combinations = [dict(zip(keys, combo)) for combo in itertools.product(*values)]
@@ -48,7 +64,8 @@ class TSModel:
             try:
                 model = TSModel.build_model(
                     input_shape=input_shape,
-                    lstm_units=params['lstm_units'],
+                    lstm_units_1=params['lstm_units_1'],
+                    lstm_units_2=params['lstm_units_2'],
                     dropout_rate=params['dropout_rate'],
                     learning_rate=params['learning_rate'],
                     dense_units=dense_units
@@ -80,11 +97,13 @@ class TSModel:
         return best_params, best_score
     
     @staticmethod
-    def train_model(input_shape, best_params:dict, train_data, val_data, test_data, dense_units, early_stopping:tf.keras.callbacks.EarlyStopping=None ,shift:int=12, 
-                    label_width:int=12, input_width:int=24, target_col:str="Potenza Uffici [W]", plot:bool=True, model_name:str=None, x_label:str=None, y_label:str=None,
-                    num_subplots:int=1):
+    def train_model(input_shape, best_params: dict, train_data, val_data, test_data, dense_units, early_stopping: tf.keras.callbacks.EarlyStopping = None, shift: int = 12, 
+                    label_width: int = 12, input_width: int = 24, target_col: str = "Potenza Uffici [W]", plot: bool = True, model_name: str = None, x_label: str = None, y_label: str = None,
+                    num_subplots: int = 1):
+        # Qui passiamo i parametri corretti per il modello con due livelli LSTM
         final_model = TSModel.build_model(input_shape=input_shape,
-            lstm_units=best_params["lstm_units"],
+            lstm_units_1=best_params["lstm_units_1"],
+            lstm_units_2=best_params["lstm_units_2"],
             dropout_rate=best_params["dropout_rate"],
             learning_rate=best_params["learning_rate"],
             dense_units=dense_units
@@ -95,7 +114,7 @@ class TSModel:
 
         history = final_model.fit(
             train_ds,
-            epochs=best_params["epochs"]+300,
+            epochs=best_params["epochs"] + 300,
             validation_data=val_ds,
             verbose=1,
             callbacks=[early_stopping]
@@ -112,14 +131,14 @@ class TSModel:
         return final_model, test_loss, test_mae
     
     @staticmethod
-    def save_model(model, name:str ,path:str="./TimeSeries/models"):
+    def save_model(model, name: str, path: str = "./TimeSeries/models"):
         if not os.path.exists(path):
             os.makedirs(path)
         model.save(f"{path}/{name}.h5")
         print(f"Model saved in {path}/{name}.h5")
 
     @staticmethod
-    def autoregressive_forecast(forecast_data, model, target_name:str, input_width:int=24):
+    def autoregressive_forecast(forecast_data, model, target_name: str, input_width: int = 24):
         predictions = []
         ground_truth = []
         for i in range(input_width, len(forecast_data)):
@@ -131,7 +150,7 @@ class TSModel:
         return np.array(predictions), np.array(ground_truth)
     
     @staticmethod
-    def forecast(forecast_data, model, target_name:str, label_width:int=12, input_width:int=24):
+    def forecast(forecast_data, model, target_name: str, label_width: int = 12, input_width: int = 24):
         predictions = []
         ground_truth = []
 
@@ -157,7 +176,7 @@ class TSModel:
         return full_pred, full_gt
     
     @staticmethod
-    def autoregressive_forecast_full(forecast_data, model, target_name:str, input_width:int=24, forecast_steps:int=1440):
+    def autoregressive_forecast_full(forecast_data, model, target_name: str, input_width: int = 24, forecast_steps: int = 1440):
         full_data = forecast_data.values
         N, n_features = full_data.shape
 
@@ -204,4 +223,3 @@ class TSModel:
             else:
                 rmse_per_hour.append(np.nan)
         return np.array(rmse_per_hour)
-

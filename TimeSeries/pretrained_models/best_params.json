@@ -1,30 +1,34 @@
 {
     "uffici_12h": {
-        "lstm_units": 64,
-        "dropout_rate": 0.0,
+        "lstm_units_1": 32,
+        "lstm_units_2":64,
+        "dropout_rate": 0.2,
         "learning_rate": 0.0005,
         "batch_size": 16,
         "epochs": 100
     },
     "uffici_1h": {
-        "lstm_units": 32,
-        "dropout_rate": 0.0,
+        "lstm_units_1": 32,
+        "lstm_units_2":64,
+        "dropout_rate": 0.2,
         "learning_rate": 0.0005,
-        "batch_size": 32,
+        "batch_size": 16,
         "epochs": 100
     },
     "irraggiamento_12h": {
-        "lstm_units": 32,
-        "dropout_rate": 0.0,
+        "lstm_units_1": 32,
+        "lstm_units_2":64,
+        "dropout_rate": 0.2,
         "learning_rate": 0.0005,
-        "batch_size": 64,
+        "batch_size": 16,
         "epochs": 100
     },
     "irraggiamento_1h": {
-        "lstm_units": 64,
-        "dropout_rate": 0.0,
+        "lstm_units_1": 32,
+        "lstm_units_2":64,
+        "dropout_rate": 0.2,
         "learning_rate": 0.0005,
-        "batch_size": 64,
+        "batch_size": 16,
         "epochs": 100
     }
 }
