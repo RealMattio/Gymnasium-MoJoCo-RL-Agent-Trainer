@@ -245,16 +245,16 @@ def main():
         irr_12h_forecast    = TSModel.autoregressive_forecast_full(preprocessed_forecast_data, irr_12h_model,    "Irraggiamento [kWh/m2]", input_width, forecast_steps)
 
         # Plot dei dati predetti
-        uffici_1h_plotter = Plotter(preprocessed_forecast_data["Potenza Uffici [W]"], uffici_1h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 1h forecast', args.forecastplot)
+        uffici_1h_plotter = Plotter(preprocessed_forecast_data["Potenza Uffici [W]"], uffici_1h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 1h forecast', args.forecastplot, args.pretrained)
         uffici_1h_plotter.points_plot(num_subplots=3)
 
-        irr_1h_plotter = Plotter(preprocessed_forecast_data["Irraggiamento [kWh/m2]"], irr_1h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 1h forecast', args.forecastplot)
+        irr_1h_plotter = Plotter(preprocessed_forecast_data["Irraggiamento [kWh/m2]"], irr_1h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 1h forecast', args.forecastplot, args.pretrained)
         irr_1h_plotter.points_plot(num_subplots=3)
 
-        uffici_12h_plotter = Plotter(preprocessed_forecast_data["Potenza Uffici [W]"], uffici_12h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 12h forecast', args.forecastplot)
+        uffici_12h_plotter = Plotter(preprocessed_forecast_data["Potenza Uffici [W]"], uffici_12h_forecast, "Timestamp", "Potenza Uffici Standardizzata", 'Uffici 12h forecast', args.forecastplot, args.pretrained)
         uffici_12h_plotter.points_plot(num_subplots=3)
 
-        irr_12h_plotter = Plotter(preprocessed_forecast_data["Irraggiamento [kWh/m2]"], irr_12h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 12h forecast', args.forecastplot)
+        irr_12h_plotter = Plotter(preprocessed_forecast_data["Irraggiamento [kWh/m2]"], irr_12h_forecast, "Timestamp", "Irraggiamento Standardizzato", 'Irraggiamento 12h forecast', args.forecastplot, args.pretrained)
         irr_12h_plotter.points_plot(num_subplots=3)
         
         # Ground truth (standardizzata) per il calcolo metriche
@@ -271,8 +271,8 @@ def main():
         irr_12h_rmse = TSModel.compute_rmse_by_hour(irr_12h_forecast, irr_ground_truth)
 
         # --- Plot di confronto ---
-        Plotter.nmae_comparison_plot(uffici_1h_nmae, uffici_12h_nmae, args.forecastplot)
-        Plotter.rmse_comparison_plot(irr_1h_rmse, irr_12h_rmse, args.forecastplot)
+        Plotter.nmae_comparison_plot(uffici_1h_nmae, uffici_12h_nmae, args.forecastplot, args.pretrained)
+        Plotter.rmse_comparison_plot(irr_1h_rmse, irr_12h_rmse, args.forecastplot, args.pretrained)
 
         # --- Salvataggio dati previsione ---        
         uff_mean = TRAIN_MEAN["Potenza Uffici [W]"]

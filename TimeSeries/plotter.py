@@ -2,10 +2,10 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import random as rd
-
+import time 
 # Classe Plotter aggiornata
 class Plotter:
-    def __init__(self, real_values, forecasted_values, xlabel:str, ylabel:str, model_name:str, show_plot:bool, real_label='Real Values', forecasted_label='Forecasted Values'):
+    def __init__(self, real_values, forecasted_values, xlabel:str, ylabel:str, model_name:str, show_plot:bool, pretrained:bool, real_label='Real Values', forecasted_label='Forecasted Values'):
         """
         Crea un oggetto Plotter per visualizzare i valori reali e previsti.
         """
@@ -17,6 +17,7 @@ class Plotter:
         self.ylabel = ylabel
         self.model_name = model_name
         self.show_plot = show_plot
+        self.pretrained = pretrained
 
     def test_plot(self, num_subplots=3):
         """
@@ -47,7 +48,10 @@ class Plotter:
         plt.tight_layout()
         if not os.path.exists('./TimeSeries/plots'):
             os.makedirs('./TimeSeries/plots')
-        plt.savefig(f'./TimeSeries/plots/test_predictions_{self.model_name}.png', dpi=300, bbox_inches='tight')
+        if self.pretrained:
+            plt.savefig(f'./TimeSeries/plots/pretrained_test_predictions_{self.model_name}.png', dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig(f'./TimeSeries/plots/test_predictions_{self.model_name}.png', dpi=300, bbox_inches='tight')
         if self.show_plot:
             plt.show()
         else:
@@ -60,6 +64,11 @@ class Plotter:
         if num_points is None:
             num_points = len(self.real_values) // num_subplots
 
+        '''
+        if len(self.real_values) != len(self.forecasted_values):
+            print(f"\nLunghezza valori reali {len(self.real_values)}", f"\nLunghezza valori predetti {len(self.forecasted_values)}")
+            raise ValueError("Real and Forecasted values have different lengths.")
+        '''
         fig, axes = plt.subplots(num_subplots, 1, figsize=(10, 5 * num_subplots))
         if num_subplots == 1:
             axes = [axes]
@@ -81,7 +90,10 @@ class Plotter:
         plt.tight_layout()
         if not os.path.exists('./TimeSeries/plots'):
             os.makedirs('./TimeSeries/plots')
-        plt.savefig(f'./TimeSeries/plots/forecasted_values_{self.model_name}.png', dpi=300, bbox_inches='tight')
+        if self.pretrained:
+            plt.savefig(f'./TimeSeries/plots/pretrained_forecasted_values_{self.model_name}.png', dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig(f'./TimeSeries/plots/forecasted_values_{self.model_name}.png', dpi=300, bbox_inches='tight')
         if self.show_plot:
             plt.show()
         else:
@@ -101,14 +113,17 @@ class Plotter:
         plt.grid(True)
         if not os.path.exists('./TimeSeries/plots'):
             os.makedirs('./TimeSeries/plots')
-        plt.savefig(f'./TimeSeries/plots/training_history_{self.model_name}.png', dpi=300, bbox_inches='tight')
+        if self.pretrained:
+            plt.savefig(f'./TimeSeries/plots/pretrained_training_history_{self.model_name}.png', dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig(f'./TimeSeries/plots/training_history_{self.model_name}.png', dpi=300, bbox_inches='tight')
         if self.show_plot:
             plt.show()
         else:
             plt.close()
 
     @staticmethod
-    def nmae_comparison_plot(uffici_1h_nmae, uffici_12h_nmae, showplot):
+    def nmae_comparison_plot(uffici_1h_nmae, uffici_12h_nmae, showplot, pretrained):
         """
         Plot del confronto tra NMAE per i modelli Uffici 1h e Uffici 12h.
         :param uffici_1h_nmae: (list) Lista di NMAE per il modello Uffici 1h.
@@ -122,14 +137,17 @@ class Plotter:
         plt.title("Confronto NMAE - Uffici 1h vs 12h")
         plt.legend()
         plt.grid(True)
-        plt.savefig("TimeSeries/plots/confronto_nmae_uffici.png", dpi=300, bbox_inches='tight')
+        if pretrained:
+            plt.savefig("TimeSeries/plots/pretrained_confronto_nmae_uffici.png", dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig("TimeSeries/plots/confronto_nmae_uffici.png", dpi=300, bbox_inches='tight')
         if showplot:
             plt.show()
         else:
             plt.close()
 
     @staticmethod
-    def rmse_comparison_plot(irr_1h_rmse, irr_12h_rmse, showplot):
+    def rmse_comparison_plot(irr_1h_rmse, irr_12h_rmse, showplot, pretrained):
         """
         Plot del confronto tra RMSE per i modelli Uffici 1h e Uffici 12h.
         :param uffici_1h_rmse: (list) Lista di RMSE per il modello Uffici 1h.
@@ -143,7 +161,10 @@ class Plotter:
         plt.title("Confronto RMSE - Irraggiamento 1h vs 12h")
         plt.legend()
         plt.grid(True)
-        plt.savefig("TimeSeries/plots/confronto_rmse_irraggiamento.png", dpi=300, bbox_inches='tight')
+        if pretrained:
+            plt.savefig("TimeSeries/plots/pretrained_confronto_rmse_irraggiamento.png", dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig("TimeSeries/plots/confronto_rmse_irraggiamento.png", dpi=300, bbox_inches='tight')
         if showplot:
             plt.show()
         else:
