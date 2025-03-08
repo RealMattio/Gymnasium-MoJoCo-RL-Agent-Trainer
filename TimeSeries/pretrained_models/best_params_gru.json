@@ -1,0 +1,30 @@
+{
+    "uffici_12h": {"batch_size": 64,
+    "epochs": 100,
+    "model__dense_units": 12,
+    "model__dropout_rate": 0.0,
+    "model__gru_units": 32,
+    "model__learning_rate": 0.0005
+    },
+    "uffici_1h": {"batch_size": 32,
+    "epochs": 100,
+    "model__dense_units": 1,
+    "model__dropout_rate": 0.0,
+    "model__gru_units": 32,
+    "model__learning_rate": 0.0005
+    },
+    "irraggiamento_12h": {"batch_size": 64,
+    "epochs": 100,
+    "model__dense_units": 12,
+    "model__dropout_rate": 0.2,
+    "model__gru_units": 64,
+    "model__learning_rate": 0.001
+    },
+    "irraggiamento_1h": {
+        "batch_size": 32,
+        "epochs": 100,
+        "model__dense_units": 1,
+        "model__dropout_rate": 0.0,
+        "model__gru_units": 32,
+        "model__learning_rate": 0.0005}
+}
