@@ -1,0 +1,9 @@
+models = {
+    12: {
+        "uff_autoreg": final_model_uff_autoreg_gru_12,
+        "uff_multistep": final_model_uff_gru_12,
+        "irr_autoreg": final_model_irr_autoreg_gru_12,
+        "uff_multistep": final_model_irr_gru_12,
+    },
+   
+}
