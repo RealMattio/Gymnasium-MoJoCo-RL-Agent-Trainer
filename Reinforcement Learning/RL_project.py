@@ -36,6 +36,8 @@ import torch
 import numpy as np
 import os
 import datetime
+import imageio
+os.environ["MUJOCO_GL"] = "glfw"
 
 # Set seed and create directories
 SEED = 42
@@ -43,12 +45,12 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 
 log_dir = "./humanoid_ppo/"
-video_dir = "./videos/"
+video_dir = "./results/videos/"
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(video_dir, exist_ok=True)
 
 # Create and normalize environments
-env_id = "Humanoid-v4"
+env_id = "Humanoid-v5"
 num_envs = 8
 
 vec_env = make_vec_env(env_id, n_envs=num_envs)
@@ -68,7 +70,8 @@ model = PPO(
     ent_coef=0.01,
     target_kl=0.03,
     verbose=1,
-    tensorboard_log=log_dir
+    tensorboard_log=log_dir,
+    device='cuda'
 )
 
 model.learn(total_timesteps=100_000, callback=EvalCallback(vec_env, best_model_save_path=log_dir, eval_freq=5000))
@@ -92,6 +95,7 @@ def record_video(model, env_id, video_dir, timestamp):
         name_prefix=f"humanoid_{timestamp}",
         episode_trigger=lambda x: True
     )
+    video_env.reset(seed=SEED)
     
     video_vec_env = DummyVecEnv([lambda: video_env])
     video_vec_env = VecNormalize.load(f"{log_dir}/vecnormalize.pkl", video_vec_env)
@@ -99,11 +103,28 @@ def record_video(model, env_id, video_dir, timestamp):
     obs = video_vec_env.reset()
     done = [False]
     while not done[0]:
-        action, _ = model.predict(obs)
+        action, _ = model.predict(obs, deterministic=True)
         obs, _, done, _ = video_vec_env.step(action)
     
     video_vec_env.close()
     return f"humanoid_{timestamp}-episode-0.mp4"
 
-video_filename = record_video(model, env_id, video_dir, timestamp)
+def record_test_video(model, env_id, video_path, timestamp):
+    env = gym.make(env_id, render_mode="rgb_array")
+    frames = []
+    obs, _ = env.reset()
+    done = False
+    while not done:
+        action, _ = model.predict(obs, deterministic=True)
+        obs, _, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
+        frame = env.render()
+        frames.append(frame)
+    
+    # Save video
+    imageio.mimsave(f"{video_path}_{timestamp}.mp4", frames, fps=30)
+    env.close()
+
+
+video_filename = record_test_video(model, env_id, video_dir, timestamp)
 print(f"Successfully recorded video: {video_filename}")
