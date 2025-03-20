@@ -1,8 +1,9 @@
-from stable_baselines3 import DQN, PPO, SAC, A2C
+from stable_baselines3 import DQN, PPO, SAC, A2C, TD3
 #from sklearn.model_selection import ParameterGrid
 import os, json, datetime
 from tqdm import tqdm
-from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, VecEnv
+from stable_baselines3.common.monitor import Monitor
 import gymnasium as gym
 from gymnasium.wrappers import RecordVideo, RecordEpisodeStatistics, TimeLimit
 import optuna
@@ -10,6 +11,7 @@ import numpy as np
 from stable_baselines3.common.callbacks import EvalCallback
 from environments import EnvironmentInitializer
 import warnings
+from typing import Dict
 
 class Model:
     DEFAULT_PPO_PARAMS = {
@@ -50,7 +52,20 @@ class Model:
                 "exploration_final_eps": 0.02,
                 "policy_kwargs": dict(net_arch=[256, 256])
     }
-    def __init__(self, model_type='PPO', env=None, params:dict=None, device='cpu', use_best_params=False):
+    DEFAULT_TD3_PARAMS = {
+                "learning_rate": 1e-3,
+                "buffer_size": 1_000_000,
+                "batch_size": 256,
+                "tau": 0.005,
+                "gamma": 0.99,
+                "policy_delay": 2,
+                "target_policy_noise": 0.2,
+                "target_noise_clip": 0.5,
+                "policy_kwargs": dict(net_arch=dict(pi=[256, 256], qf=[256, 256]))
+            }
+        
+    
+    def __init__(self, model_type='PPO', env=None, params:dict=None, device='cpu', use_best_params=False, env_id:str='Ant-v5'):
         '''
         Initialize the model with the given parameters
         :param model_type: Type of the model. Default "PPO"
@@ -65,13 +80,14 @@ class Model:
         self.model_type = model_type
         self.device = device
         self.env = env
+        self.env_id = env_id
         if self.env is None:
-            warnings.warn("Environment not provided. Make sure you are just recording the video otherwise the program will crash")
+            warnings.warn("\nEnvironment not provided. Make sure you are just recording the video otherwise the program will crash\n", UserWarning)
         if params is not None:
             self.best_params = params
         # if the best_params.json file exist, store the best parameters from that file
-        elif use_best_params and os.path.exists(f"./results/hyperparameters/{self.model_type}_best_params.json"):
-            with open(f"./results/hyperparameters/{self.model_type}_best_params.json", "r") as file:
+        elif use_best_params and os.path.exists(f"./results/hyperparameters/{self.model_type}_{self.env_id}_best_params.json"):
+            with open(f"./results/hyperparameters/{self.model_type}_{self.env_id}_best_params.json", "r") as file:
                 self.best_params = json.load(file)
             print(f"Best parameters found! Model initialized with these parameters.")
         else:
@@ -101,6 +117,13 @@ class Model:
                     return DQN('MlpPolicy', self.env, verbose=0, device=self.device, **self.DEFAULT_DQN_PARAMS)
                 else:
                     return DQN('MlpPolicy', self.env, verbose=0, device=self.device, **self.best_params)
+            elif self.model_type == 'TD3':
+                if self.best_params is None:
+                    return TD3('MlpPolicy', self.env, verbose=0, device=self.device, **self.DEFAULT_TD3_PARAMS)
+                else:
+                    return TD3('MlpPolicy', self.env, verbose=0, device=self.device, **self.best_params)
+            elif self.model_type == 'random':
+                warnings.warn("Random model selected. No model will be initialized. Make sure you are performing just evaluation or recording video. Otherwise the program will crash")
             else:
                 raise ValueError(f"Unsupported model type: {self.model_type}")
         else:
@@ -112,6 +135,10 @@ class Model:
                 return SAC('MlpPolicy', self.env, verbose=0, device=self.device, **params)
             elif self.model_type == 'DQN':
                 return DQN('MlpPolicy', self.env, verbose=0, device=self.device, **params)
+            elif self.model_type == 'TD3':
+                return TD3('MlpPolicy', self.env, verbose=0, device=self.device, **params)
+            elif self.model_type == 'random':
+                warnings.warn("Random model selected. No model will be initialized. Make sure you are performing just evaluation or recording video. Otherwise the program will crash")
             else:
                 raise ValueError(f"Unsupported model type: {self.model_type}")
             
@@ -127,6 +154,10 @@ class Model:
             self.model = SAC.load(path)
         elif self.model_type == 'DQN':
             self.model = DQN.load(path)
+        elif self.model_type == 'TD3':
+            self.model = TD3.load(path)
+        elif self.model_type == 'random':
+            warnings.warn("Random model selected. No model will be loaded. Make sure you are performing just evaluation or recording video. Otherwise the program will crash", UserWarning)
         else:
             raise ValueError(f"Unsupported model type: {self.model_type}")
 
@@ -190,6 +221,21 @@ class Model:
                         }
                     }
                 }
+            elif self.model_type == "TD3":
+                hyperparams = {
+                    "buffer_size": trial.suggest_int("buffer_size", 500_000, 3_000_000, step=500_000),
+                    "batch_size": trial.suggest_categorical("batch_size", [128, 256, 512, 1024]),
+                    "tau": trial.suggest_float("tau", 0.001, 0.02),
+                    "policy_delay": trial.suggest_int("policy_delay", 1, 4),
+                    "target_policy_noise": trial.suggest_float("target_policy_noise", 0.1, 0.3),
+                    "target_noise_clip": trial.suggest_float("target_noise_clip", 0.1, 0.3),
+                    "policy_kwargs": {
+                        "net_arch": {
+                            "pi": policy_arch[arch_choice],
+                            "qf": policy_arch[arch_choice]
+                        }
+                    }
+                }
 
             model = self._initialize_model(params=hyperparams)
             eval_callback = EvalCallback(
@@ -221,16 +267,70 @@ class Model:
             best_params.pop("num_layers")
         return best_params
 
-    def evaluate_model(self, model):
-        # Implement your evaluation logic here
-        # For example, return the mean reward over several episodes
-        return 0
-    
-    def record_video(self, env_id, video_dir="./results/videos", episodes=5, seed=42, max_steps=10000):
+    def evaluate_model(self, eval_env, seed, n_eval_episodes: int = 10) -> Dict[str, float]:
+        """
+        Evaluates a RL model's performance with proper VecEnv handling.
+        """
+        if self.model_type == "random":
+            return self.run_random_policy(self.env_id, seed, n_episodes=n_eval_episodes)
+        # Ensure environment is vectorized
+        if not isinstance(eval_env, VecEnv):
+            eval_env = DummyVecEnv([lambda: eval_env])
+        
+        episode_rewards = []
+        current_rewards = np.zeros(eval_env.num_envs)
+        episode_counts = np.zeros(eval_env.num_envs, dtype=int)
+
+        obs = eval_env.reset()
+        
+        while len(episode_rewards) < n_eval_episodes:
+            actions, _ = self.model.predict(obs, deterministic=True)
+            obs, rewards, dones, infos = eval_env.step(actions)
+            
+            current_rewards += rewards
+            
+            for env_idx in range(eval_env.num_envs):
+                if dones[env_idx]:
+                    episode_rewards.append(current_rewards[env_idx])
+                    episode_counts[env_idx] += 1
+                    current_rewards[env_idx] = 0
+                    obs = eval_env.reset()
+
+        rewards_array = np.array(episode_rewards)
+        metrics = {
+            "mean_episode_reward": float(np.mean(rewards_array)),
+            "std_episode_reward": float(np.std(rewards_array)),
+            "variance_episode_reward": float(np.var(rewards_array)),
+            "total_episodes_reward": float(np.sum(rewards_array)),
+            "max_episode_reward": float(np.max(rewards_array)),
+            "min_episode_reward": float(np.min(rewards_array)),
+            "episode_count": len(episode_rewards),
+            "all_episodes_rewards": [float(rew) for rew in episode_rewards],
+            "episodes_per_env": episode_counts.tolist()
+        }
+        print(f"\nEvaluation of model {self.model_type} on environment {self.env_id} completed.")
+        return metrics
+
+    def save_metrics(self, metrics:dict, path:str="./results/evaluation"):
+        if os.path.exists(f"{path}/metrics_{self.env_id}.json"):
+            with open(f"{path}/metrics_{self.env_id}.json", "r") as file:
+                data = json.load(file)
+                data[f"{self.model_type}"] = metrics
+            with open(f"{path}/metrics_{self.env_id}.json", "w") as file:
+                json.dump(data, file)
+        else:
+            os.makedirs(path, exist_ok=True)
+            data = {}
+            with open(f"{path}/metrics_{self.env_id}.json", "w") as file:
+                data[f"{self.model_type}"] = metrics
+                json.dump(data, file)
+        print(f"Metrics saved at {path}/metrics_{self.env_id}.json")
+        
+    def record_video(self, video_dir="./results/videos", episodes=5, seed=42, max_steps=10000):
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        name_prefix = f"{self.model_type}_{env_id}_{timestamp}"
-        base_env = gym.make(env_id, render_mode="rgb_array")  # Explicit render mode
-        base_env = EnvironmentInitializer(env_id=env_id, n_envs=1, seed=seed, model_type=self.model_type).create_video_env()
+        name_prefix = f"{self.model_type}_{self.env_id}_{timestamp}"
+        base_env = gym.make(self.env_id, render_mode="rgb_array")  # Explicit render mode
+        base_env = EnvironmentInitializer(env_id=self.env_id, n_envs=1, seed=seed, model_type=self.model_type).create_video_env()
         video_env = RecordVideo(
             base_env,
             video_folder=video_dir,
@@ -253,7 +353,10 @@ class Model:
             episode_reward = 0
             n_action = 0
             while not done:
-                action, _ = self.model.predict(obs, deterministic=True)
+                if self.model_type == "random":
+                    action = video_env.action_space.sample()
+                else:
+                    action, _ = self.model.predict(obs, deterministic=True)
                 obs, reward, terminated, truncated, _ = video_env.step(action)
                 #obs, _, terminated, truncated = video_vec_env.step(action)
                 done = terminated or truncated
@@ -269,4 +372,30 @@ class Model:
     def save_model(self, path):
         self.model.save(path)
         print(f"Model saved at {path}")
-        
+    
+    def run_random_policy(self, seed, n_episodes=10):
+        env = gym.make(self.env_id)
+        env = Monitor(env)
+        episodes_rewards = []
+        for episode in range(n_episodes):
+            obs= env.reset(seed=seed + episode)
+            terminated = False
+            truncated = False
+            current_reward = 0
+            while not terminated and not truncated:
+                action = env.action_space.sample()
+                obs, reward, terminated, truncated, _ = env.step(action)
+                current_reward += reward
+            episodes_rewards.append(current_reward)
+        metrics = {
+            "mean_episode_reward": float(np.mean(episodes_rewards)),
+            "std_episode_reward": float(np.std(episodes_rewards)),
+            "variance_episode_reward": float(np.var(episodes_rewards)),
+            "total_episodes_reward": float(np.sum(episodes_rewards)),
+            "max_episode_reward": float(np.max(episodes_rewards)),
+            "min_episode_reward": float(np.min(episodes_rewards)),
+            "episode_count": len(episodes_rewards),
+            "all_episodes_rewards": [float(rew) for rew in episodes_rewards]
+        }
+        return metrics
+                 
