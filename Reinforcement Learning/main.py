@@ -71,9 +71,9 @@ def main():
                 all_algorithms = metrics.keys()
                 # create a list of lists with the metrics for each algorithm
                 metrics = [metrics[algo]["all_episodes_rewards"] for algo in all_algorithms]
-                print(metrics)
-                title = f"Comparison of Algorithms performance for {args.env_id}"
-                pl.box_plot(metrics, all_algorithms, title, "Algorithms", "Rewards")
+                box_title = f"Comparison of Algorithms rewards during {args.n_eval_episodes} episodes for {args.env_id}"
+                title = f"Rewards during episodes for {args.env_id}"
+                pl.box_plot(metrics, all_algorithms, box_title, "Algorithms", "Rewards")
                 pl.plot_rewards(metrics, all_algorithms, title, "Episodes", "Rewards")
         else:
             raise Exception(f"No metrics found for {args.env_id}. Plotting aborted.")

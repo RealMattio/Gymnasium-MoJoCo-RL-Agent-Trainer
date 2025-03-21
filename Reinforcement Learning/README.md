@@ -54,8 +54,8 @@ Il repository è organizzato per facilitare la navigazione e la gestione dei fil
 │   │   ├── DQN_Hopper-v5.zip
 │   │   └── ...
 │   ├── plots/             # Cartella per il salvataggio dei grafici
-│   │   ├── Comparison of Algorithms performance for Ant-v5.png
-│   │   ├── rewards_per_episode.png
+│   │   ├── Comparison of Algorithms rewards during 10 episodes for Ant-v5.png
+│   │   ├── Rewards during episodes for Ant-v5.png
 │   │   └── ...
 │   └── videos/            # Cartella per il salvataggio dei video utili alla visualizzazione del modello in esecuzione
 │
@@ -146,3 +146,4 @@ Si noti che la valutazione comprende sempre l'esecuzione di una policy casuale. 
 #### Utilizzo di Modelli Pre-Addestrati
 Il progetto fornirà una selezione di modelli pre-addestrati per alcuni agenti e algoritmi. L'utente potrà specificare di non voler eseguire l'addestramente e in questo caso il programma caricherà il modello pre-addestrato specificato. In questo caso, se specificato procederà direttamente alla fase di valutazione e generazione dei grafici di comparazione.
 
+ATTENZIONE: alcuni degli algoritmi utilizzati in questo progetto come SAC o A2C possono richiedere lunghi tempi di addestramento. In particolare, per l'addestramento i modelli preaddestrati ivi presentati sono stati addestrati tutti per un totale di 2000000 (2 mln) di time steps e hanno impiegato da 1h e 20min (PPO) a 9h e 45min (SAC).

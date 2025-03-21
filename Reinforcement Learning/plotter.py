@@ -49,5 +49,5 @@ class Plotter:
         plt.grid(True)
         if save:
             os.makedirs(save_path, exist_ok=True)
-            plt.savefig(f"{save_path}/rewards_per_episode.png")
+            plt.savefig(f"{save_path}/{title}.png")
         plt.show()
