@@ -1,5 +1,7 @@
 ### Gymnasium RL Agent Trainer - A Modular Framework for Algorithm Benchmarking, Hyperparameter Optimization, and Performance Evaluation in MuJoCo Environments
 
+To read the README.md in English, click [here](README_english.md).
+
 ## Indice  
 1. [Descrizione del Progetto](#1-descrizione-del-progetto)  
 2. [Setup dell'Ambiente](#2-setup-dellambiente)  
@@ -36,7 +38,7 @@ Prima di eseguire il codice, assicurati di utilizzare la versione di **Python 3.
     *   Se la versione di pip non è aggiornata, esegui: `pip install --upgrade pip`.
 
 ### 3. Struttura della Repository
-Il repository è organizzato per facilitare la navigazione e la gestione dei file. La struttura potrebbe includere cartelle dedicate per ciascun agente e, all'interno di queste, sottocartelle per ogni algoritmo implementato. Ad esempio:
+Il repository è organizzato per facilitare la navigazione e la gestione dei file. Ed è presentato di seguito:
 
 ```
 ├── results/               # Cartella per il salvataggio dei risultati
@@ -70,6 +72,7 @@ Il repository è organizzato per facilitare la navigazione e la gestione dei fil
 ├── requirements.txt
 └── README.md
 ```
+
 ### 4. Agenti Supportati  
 Questo progetto supporta l'addestramento e la valutazione dei seguenti agenti (elencati in ordine di complessità) forniti dall'ambiente Gymnasium:  
 *   **Hopper-v5**: agente monopode 2D progettato per testare algoritmi di equilibrio e salto. L'obiettivo è mantenere un'oscillazione ritmica in avanti senza sovraccaricare le articolazioni, con osservazioni focalizzate su angolazione del torso e velocità lineari/angolari.  
