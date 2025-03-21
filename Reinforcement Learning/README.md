@@ -152,5 +152,5 @@ Il progetto fornirà una selezione di modelli pre-addestrati per alcuni agenti e
 ATTENZIONE: alcuni degli algoritmi utilizzati in questo progetto come SAC o A2C possono richiedere lunghi tempi di addestramento. In particolare, per l'addestramento i modelli preaddestrati ivi presentati sono stati addestrati tutti per un totale di 2000000 (2 mln) di time steps e hanno impiegato da 1h e 20min (PPO) a 9h e 45min (SAC).
 
 <video controls>
-  <source src="Reinforcement Learning/results/videos/SAC_Ant-v5_20250320_083249-episode-2.mp4" type="video/mp4">
+  <source src="./results/videos/SAC_Ant-v5_20250320_083249-episode-2.mp4" type="video/mp4">
 </video>
