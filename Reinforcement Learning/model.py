@@ -272,7 +272,7 @@ class Model:
         Evaluates a RL model's performance with proper VecEnv handling.
         """
         if self.model_type == "random":
-            return self.run_random_policy(self.env_id, seed, n_episodes=n_eval_episodes)
+            return self.run_random_policy(seed, n_episodes=n_eval_episodes)
         # Ensure environment is vectorized
         if not isinstance(eval_env, VecEnv):
             eval_env = DummyVecEnv([lambda: eval_env])
