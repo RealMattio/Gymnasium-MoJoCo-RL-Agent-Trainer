@@ -18,6 +18,7 @@ class ArgumentParser:
         --seed: Random seed. Default 42
         --env_monitor_dir: Directory to save environment monitoring data. Default "./monitoring/"
         --no_record_video: Whether to record video. Default True
+        --video_folder: Folder to save the video. Default "./results/videos/"
         --evaluate_model: Whether to evaluate the model. Default False
         --n_eval_episode: Number of evaluation episodes to run. Default 10
         --comparison_plot: Whether to plot the comparison. Default False
@@ -35,6 +36,7 @@ class ArgumentParser:
         self.parser.add_argument('--seed', type=int, default=42, help='Random seed')
         self.parser.add_argument('--env_monitor_dir', type=str, default='./monitoring/', help='Directory to save environment monitoring data')
         self.parser.add_argument('--no_record_video', action='store_false', help='Whether to record video. If not specified, video will be recorded')
+        self.parser.add_argument('--video_folder', type=str, default='./results/videos/', help='Folder to save the video')
         self.parser.add_argument('--evaluate_model', action='store_true', help='Whether to evaluate the model')
         self.parser.add_argument('--n_eval_episodes', type=int, default=10, help='Number of evaluation episodes to run')
         self.parser.add_argument('--comparison_plot', action='store_true', help='Whether to plot the comparison')

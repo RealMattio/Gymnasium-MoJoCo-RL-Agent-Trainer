@@ -2,14 +2,15 @@ from stable_baselines3 import DQN, PPO, SAC, A2C, TD3
 #from sklearn.model_selection import ParameterGrid
 import os, json, datetime
 from tqdm import tqdm
-from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, VecEnv
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, VecEnv, VecVideoRecorder
+from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.monitor import Monitor
 import gymnasium as gym
 from gymnasium.wrappers import RecordVideo, RecordEpisodeStatistics, TimeLimit
 import optuna
 import numpy as np
 from stable_baselines3.common.callbacks import EvalCallback
-from environments import EnvironmentInitializer
+from environments import EnvironmentInitializer, DiscreteActionWrapper
 import warnings
 from typing import Dict
 
@@ -145,21 +146,47 @@ class Model:
     def learn(self, total_timesteps):
         self.model.learn(total_timesteps=total_timesteps, progress_bar=True)
     
-    def load_model(self, path):
+    def load_model(self, path, record=False, env=None):
         if self.model_type == 'A2C':
-            self.model = A2C.load(path)
+            if record and env is not None:
+                self.model = A2C.load(path, env=env)
+            elif record and env is None:
+                raise Exception("Environment not provided")
+            else:
+                self.model = A2C.load(path)
         elif self.model_type == 'PPO':
-            self.model = PPO.load(path)
+            if record and env is not None:
+                self.model = PPO.load(path, env=env)
+            elif record and env is None:
+                raise Exception("Environment not provided")
+            else:
+                self.model = PPO.load(path)
         elif self.model_type == 'SAC':
-            self.model = SAC.load(path)
+            if record and env is not None:
+                self.model = SAC.load(path, env=env)
+            elif record and env is None:
+                raise Exception("Environment not provided")
+            else:
+                self.model = SAC.load(path)
         elif self.model_type == 'DQN':
-            self.model = DQN.load(path)
+            if record and env is not None:
+                self.model = DQN.load(path, env=env)
+            elif record and env is None:
+                raise Exception("Environment not provided")
+            else:
+                self.model = DQN.load(path)
         elif self.model_type == 'TD3':
-            self.model = TD3.load(path)
+            if record and env is not None:
+                self.model = TD3.load(path, env=env)
+            elif record and env is None:
+                raise Exception("Environment not provided")
+            else:
+                self.model = TD3.load(path)
         elif self.model_type == 'random':
             warnings.warn("Random model selected. No model will be loaded. Make sure you are performing just evaluation or recording video. Otherwise the program will crash", UserWarning)
         else:
             raise ValueError(f"Unsupported model type: {self.model_type}")
+        return self.model
 
     def tune_hyperparameters(self, n_tuning_trials=20) -> dict:
         policy_arch = {
@@ -325,49 +352,6 @@ class Model:
                 data[f"{self.model_type}"] = metrics
                 json.dump(data, file)
         print(f"Metrics saved at {path}/metrics_{self.env_id}.json")
-        
-    def record_video(self, video_dir="./results/videos", episodes=5, seed=42, max_steps=10000):
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        name_prefix = f"{self.model_type}_{self.env_id}_{timestamp}"
-        base_env = gym.make(self.env_id, render_mode="rgb_array")  # Explicit render mode
-        base_env = EnvironmentInitializer(env_id=self.env_id, n_envs=1, seed=seed, model_type=self.model_type).create_video_env()
-        video_env = RecordVideo(
-            base_env,
-            video_folder=video_dir,
-            name_prefix=name_prefix,
-            episode_trigger=lambda x: True
-        )
-        video_env = RecordEpisodeStatistics(video_env)  # Track episode statistics (e.g., rewards, length)
-        video_env = TimeLimit(video_env, max_episode_steps=max_steps) 
-        video_env.reset(seed=seed)
-        
-        #video_vec_env = DummyVecEnv([lambda: video_env])
-        #video_vec_env = VecNormalize.load(f"vec_normalization/vecnormalize.pkl", video_vec_env)
-        
-        rewards = {}
-        print(f"Recording videos for {episodes} episodes")
-        for episode in tqdm(range(episodes), desc="Episodes"):
-            obs, _ = video_env.reset(seed=seed+episode)
-            #obs = video_vec_env.reset()
-            done = False
-            episode_reward = 0
-            n_action = 0
-            while not done:
-                if self.model_type == "random":
-                    action = video_env.action_space.sample()
-                else:
-                    action, _ = self.model.predict(obs, deterministic=True)
-                obs, reward, terminated, truncated, _ = video_env.step(action)
-                #obs, _, terminated, truncated = video_vec_env.step(action)
-                done = terminated or truncated
-                episode_reward += reward
-                n_action += 1
-            rewards[f"reward_episode_{episode}"] = episode_reward
-            rewards[f"n_action_episode_{episode}"] = n_action
-        #video_vec_env.close()
-        video_env.close()
-        print(f"Episods completed. Reward obtained: {rewards}")
-        print(f"Saved videos \"{name_prefix}-episode-xx.mp4\" in \"{video_dir}\"")
     
     def save_model(self, path):
         self.model.save(path)
@@ -398,4 +382,71 @@ class Model:
             "all_episodes_rewards": [float(rew) for rew in episodes_rewards]
         }
         return metrics
-                 
+
+@staticmethod          
+def record_vec_video(model_type:str, env_id:str, video_folder:str="./results/videos/", video_length:int=500, seed=45):
+    # Create a new environment for recording
+    test_env = make_vec_env(env_id=lambda: gym.make(env_id, render_mode="rgb_array"), n_envs=1, seed=seed)
+
+    # Load VecNormalize statistics for the test environment
+    if os.path.exists(f"./vec_normalization/{model_type}_{env_id}.pkl"):
+        test_env = VecNormalize.load(f"./vec_normalization/{model_type}_{env_id}.pkl", test_env)
+    
+    prefix = f"{model_type}_{env_id}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    # Record video of the model's performance
+    test_env = VecVideoRecorder(test_env, video_folder, record_video_trigger=lambda x: x == 0, video_length=video_length, name_prefix=prefix)
+    model = Model(model_type=model_type, env=test_env, use_best_params=True)
+    model = model.load_model(f"./results/model/{model_type}_{env_id}.zip", record=True, env=test_env)
+
+    # Reset the environment
+    obs = test_env.reset()
+
+    # Run the model in the environment and record the video
+    for _ in tqdm(range(video_length)):
+        if model_type == "random":
+            action = [test_env.action_space.sample()]
+        else:
+            action, _states = model.predict(obs, deterministic=True)
+        obs, rewards, dones, info = test_env.step(action)
+        # exit recording if episode is terminated or truncated
+        if dones:
+            break
+
+    # Close the environment
+    test_env.close()
+    print(f"Video recorded successfully. Saved at {video_folder}/{prefix}-step-0-to-step-500.mp4")
+
+@staticmethod
+def record_dqn_video(model_type:str, env_id:str, video_folder:str="./results/videos/", video_length:int=500, seed=45):
+    # Create a new environment for recording
+    model_type = "DQN"
+    env = gym.make(env_id, render_mode="rgb_array")
+    env = DiscreteActionWrapper(env)
+    env = Monitor(env)
+    model = Model(model_type=model_type, env=env, use_best_params=True)
+    model = model.load_model(f"./results/model/{model_type}_{env_id}.zip", record=True, env=env)
+    prefix = f"{model_type}_{env_id}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    env = RecordVideo(
+        env,
+        video_folder=video_folder,
+        episode_trigger=lambda x: True,
+        name_prefix=prefix,
+        disable_logger=True
+    )
+    # Initialize tracking
+    frames = []
+    try:
+        obs, info = env.reset(seed=seed)
+        for _ in tqdm(range(video_length)):
+            action, _ = model.predict(obs, deterministic=True)
+            obs, reward, terminated, truncated, info = env.step(action)
+            if terminated or truncated:
+                obs, info = env.reset()
+                break
+            # Capture frame directly from render
+            frame = env.render()
+            if frame is not None:
+                frames.append(frame)    
+    finally:
+        env.close()
+        print(f"Video recorded successfully. Saved at {video_folder}/{prefix}-episode-0.mp4")

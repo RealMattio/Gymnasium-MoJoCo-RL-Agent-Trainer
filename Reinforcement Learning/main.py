@@ -1,7 +1,7 @@
 from environments import EnvironmentInitializer
 from argumentParser import ArgumentParser
 from plotter import Plotter as pl
-from model import Model
+from model import Model, record_vec_video, record_dqn_video
 import json, os
 
 
@@ -56,13 +56,11 @@ def main():
         model.save_metrics(metrics, f"{args.save_eval_path}")
     # If the user wants to record video
     if args.no_record_video:
-        if model is None and env is None:
-            env_initializer = EnvironmentInitializer(model_type=args.model_type, env_id=args.env_id, n_envs=args.n_envs, seed=args.seed, monitor_dir=args.env_monitor_dir)
-            env = env_initializer.create_env()
-            model = Model(model_type=args.model_type, env=env, device=args.device, use_best_params=True, env_id=args.env_id)
-            model.load_model(f"{args.save_path}/{args.model_type}_{args.env_id}.zip")
         # Record video
-        model.record_video()
+        if args.model_type == "DQN":
+            record_dqn_video(args.model_type, args.env_id, video_folder=args.video_folder)
+        else:
+            record_vec_video(args.model_type, args.env_id, video_folder=args.video_folder)
     
     if args.comparison_plot:
         if os.path.exists(f"{args.save_eval_path}/metrics_{args.env_id}.json"):
