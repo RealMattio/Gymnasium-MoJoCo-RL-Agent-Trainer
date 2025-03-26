@@ -1,0 +1,1 @@
+{"learning_rate": 5.464669154655067e-05, "gamma": 0.9972863879863858, "buffer_size": 2000000, "batch_size": 1024, "tau": 0.009120297016769075, "policy_kwargs": {"net_arch": [512, 512]}}

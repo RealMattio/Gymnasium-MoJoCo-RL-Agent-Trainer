@@ -1,1 +1,9 @@
-TimeSeries/__pycache__/
+__pycache__/
+RLpip/
+prova.py
+RL_project.py
+RL_video.py
+monitoring/*.csv
+monitoring/
+
+
