@@ -161,8 +161,7 @@ I modelli preaddestrati forniti con questo progetto sono stati addestrati tutti 
 Si noti che il modello DQN non è fornito per l'agente `Humanoid-v5` per limiti tecnici del colcolatore addestrante.
 
 ### 8. Risultati e Conclusioni
-A seguito dell'addestramento dei modelli è possibile confrontare le prestazioni degli stessi. I grafici delle prestazioni sono contenuti nella cartella `./results/plots/`. In particolare osserviamo che i modelli SAC e TD3 sono coloro che all'aumentare della complessità degli agenti riescono a migliorare le prestazioni. Questo anche in virtù dell'aumentare dei timesteps di addestramento. I modelli PPO e A2C invece risultano essere piuttosto versatili bilanciando le prestazioni con i tempi di calcolo. Tuttavia come si evince dalle prestazioni, i time stamps richiesti per l'addestramento non sono sufficienti a raggiungere le prestazioni dei modelli SAC e TD3. Infine, il modello DQN risulta essere il meno prestante, questo può essere imputato anche alla discretizzazione dell'ambiente richiesta. Le prestazioni del modello DQN sono facilmente osservabili anche dai video allegati.
-
+I risultati e l'analisi delle performance sono contenuti nel file [results.md](./results/results.md).
 
 <table>
   <tr>

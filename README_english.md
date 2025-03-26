@@ -161,8 +161,7 @@ The pre-trained models provided with this project were all trained after perform
 Note that the DQN model is not provided for the `Humanoid-v5` agent due to technical limitations of the training distributor.
 
 ### 8. Results and Conclusions
-After training the models, it is possible to compare their performance. The performance graphs are contained in the `./results/plots/` folder. In particular, we observe that the SAC and TD3 models are those that manage to improve performance as the complexity of the agents increases. This is also due to the increase in training times. The PPO and A2C models, on the other hand, appear to be quite versatile, balancing performance with computation times. However, as can be seen from the performance, the time stamps required for training are not sufficient to reach the performance of the SAC and TD3 models. Finally, the DQN model appears to be the least performing, this can also be attributed to the discretization of the environment required. The performance of the DQN model can also be easily observed from the attached videos.
-
+Results and performance analysis are contained in the file [results.md](./results/results.md).
 
 <table>
   <tr>
