@@ -1,1 +1,0 @@
-{"learning_rate": 0.0001264661493929153, "gamma": 0.916487846529478, "buffer_size": 1000000, "batch_size": 128, "tau": 0.005148036649796397, "policy_delay": 2, "target_policy_noise": 0.13496202369119584, "target_noise_clip": 0.22820470085385242, "policy_kwargs": {"net_arch": [256, 64, 512, 64]}}

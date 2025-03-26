@@ -1,0 +1,1 @@
+{"learning_rate": 0.00022610639155715183, "gamma": 0.9121969331118642, "n_steps": 512, "batch_size": 128, "n_epochs": 28, "gae_lambda": 0.9664965387446832, "clip_range": 0.2864568359302482, "ent_coef": 0.0008259530431274032, "policy_kwargs": {"net_arch": [256, 256]}}

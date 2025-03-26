@@ -1,1 +1,0 @@
-{"learning_rate": 7.59351952905534e-05, "gamma": 0.9230915560021036, "buffer_size": 1000000, "batch_size": 256, "exploration_fraction": 0.20088940933685348, "exploration_initial_eps": 0.9514804254620387, "exploration_final_eps": 0.08011701509404942, "policy_kwargs": {"net_arch": [512, 512]}}

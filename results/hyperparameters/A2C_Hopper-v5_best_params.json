@@ -1,0 +1,1 @@
+{"learning_rate": 2.41084711201196e-05, "gamma": 0.92489389083042, "n_steps": 68, "gae_lambda": 0.9515702742080422, "ent_coef": 0.0033725374096931215, "policy_kwargs": {"net_arch": [64, 64]}}

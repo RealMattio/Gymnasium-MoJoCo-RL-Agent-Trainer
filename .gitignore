@@ -1,10 +1,9 @@
-TimeSeries/__pycache__/
-Reinforcement Learning/__pycache__/
-Reinforcement Learning/RLpip/
-Reinforcement Learning/prova.py
-Reinforcement Learning/RL_project.py
-Reinforcement Learning/RL_video.py
-Reinforcement Learning/monitoring/*.csv
-Reinforcement Learning/monitoring/
+__pycache__/
+RLpip/
+prova.py
+RL_project.py
+RL_video.py
+monitoring/*.csv
+monitoring/
 
 
